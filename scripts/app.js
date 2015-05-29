@@ -6,7 +6,7 @@ var app = angular
     'ngResource',
     'ngRoute',
     'firebase',
-    // 'toaster'
+    'toaster'
   ])
   .constant('FURL', 'https://taskfennec.firebaseio.com/')
   .config(function ($routeProvider) {
