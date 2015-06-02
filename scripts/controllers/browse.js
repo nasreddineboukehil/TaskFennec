@@ -1,16 +1,17 @@
 'use strict';
 
-app.controller('BrowseController', function($scope, $routeParams, toaster, Task, Auth) {
+app.controller('BrowseController', function($scope, $routeParams, toaster, Task, Auth, Comment) {
 
   $scope.searchTask = '';
-  $scope.tasks      = Task.all;
+  $scope.tasks = Task.all;
 
-  $scope.signedIn   = Auth.signedIn;
+  $scope.user = Auth.user;
+  $scope.signedIn = Auth.signedIn;
 
-  $scope.listMode   = true;
+  $scope.listMode = true;
 
   if($routeParams.taskId) {
-    var task        = Task.getTask($routeParams.taskId).$asObject();
+    var task = Task.getTask($routeParams.taskId).$asObject();
     $scope.listMode = false;
     setSelectedTask(task);
   }
@@ -27,6 +28,9 @@ app.controller('BrowseController', function($scope, $routeParams, toaster, Task,
       // Check if the selectedTask is open
       $scope.isOpen = Task.isOpen;
     }
+
+    // Get list of comments for the selected task
+    $scope.comments = Comment.comments(task.$id);
   };
 
   // --------------- TASK ---------------
@@ -36,4 +40,19 @@ app.controller('BrowseController', function($scope, $routeParams, toaster, Task,
       toaster.pop('success', "This task is cancelled successfully.");
     });
   };
+
+  // --------------- COMMENT ---------------
+
+  $scope.addComment = function() {
+    var comment = {
+      content: $scope.content,
+      name: $scope.user.profile.name,
+      gravatar: $scope.user.profile.gravatar
+    };
+
+    Comment.addComment($scope.selectedTask.$id, comment).then(function() {
+      $scope.content = '';
+    });
+  };
+
 });
