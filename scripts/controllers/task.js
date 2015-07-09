@@ -1,24 +1,56 @@
 'use strict';
 
-app.controller('TaskController', function($scope, $location, $routeParams, toaster, Task, Auth) {
+app.factory('Task', function(FURL, $firebase, Auth) {
+  var ref = new Firebase(FURL);
+  var tasks = $firebase(ref.child('tasks')).$asArray();
+  var user = Auth.user;
 
-  $scope.createTask      = function() {
-    $scope.task.status   = 'open';
-    $scope.task.gravatar = Auth.user.profile.gravatar;
-    $scope.task.name     = Auth.user.profile.name;
-    $scope.task.poster   = Auth.user.uid;
+  var Task = {
+    all: tasks,
 
-    Task.createTask($scope.task).then(function(ref) {
-      toaster.pop('sucess', 'Task created sucessfully');
-      $scope.task = {title: '', description: '', total: '', status: 'open', gravatar: '', name: '', poster: ''};
-      $location.path('/browse/' + ref.key());
-    });
+    getTask: function(taskId) {
+      return $firebase(ref.child('tasks').child(taskId));
+    },
+
+    createTask: function(task) {
+      task.datetime = Firebase.ServerValue.TIMESTAMP;
+      return tasks.$add(task);
+    },
+
+    editTask: function(task) {
+      var t = this.getTask(task.$id);
+      return t.$update({title: task.title, description: task.description, total: task.total});
+    },
+
+    cancelTask: function(taskId) {
+      var t = this.getTask(taskId);
+      return t.$update({status: "cancelled"});
+    },
+
+    isCreator: function(task) {
+      return (user && user.provider && user.uid === task.poster);
+    },
+
+    isOpen: function(task) {
+      return task.status === "open";
+    },
+
+    // --------------------------------------------------//
+
+    isAssignee: function(task) {
+      return (user && user.provider && user.uid === task.runner);
+    },
+
+    completeTask: function(taskId) {
+      var t = this.getTask(taskId);
+      return t.$update({status: "completed"});
+    },
+
+    isCompleted: function(task) {
+      return task.status === "completed";
+    }
   };
 
-  $scope.editTask = function(task) {
-    Task.editTask(task).then(function() {
-      toaster.pop('success', "Task is updated.");
-    });
-  };
+  return Task;
 
 });

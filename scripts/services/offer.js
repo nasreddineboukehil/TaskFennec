@@ -56,6 +56,25 @@ app.factory('Offer', function(FURL, $firebase, $q, Auth) {
 
   };
 
+  //-----------------------------------------------//
+
+  acceptOffer: function(taskId, offerId, runnerId) {
+    // Step 1: Update Offer with accepted = true
+    var o = this.getOffer(taskId, offerId);
+    return o.$update({accepted: true})
+      .then(function() {
+
+        // Step 2: Update Task with status = "assigned" and runnerId
+        var t = Task.getTask(taskId);
+        return t.$update({status: "assigned", runner: runnerId});
+      });
+  }
+
+
   return Offer;
 
 });
+
+
+
+
